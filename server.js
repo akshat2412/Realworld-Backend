@@ -1,7 +1,7 @@
 const express = require('express')
 
 const { db, User } = require('./db/dbconfig')
-const userRouter = require('./routers/user')
+const userRouter = require('./routes/user')
 
 const server = express()
 

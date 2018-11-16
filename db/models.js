@@ -15,7 +15,8 @@ module.exports = {
         username: {
             type: DT.STRING,
             allowNull: false,
-            unique: true
+            unique: true,
+            primaryKey: true,
         },
         bio: {
             type: DT.STRING,
@@ -37,7 +38,15 @@ module.exports = {
                 type: DT.STRING,
                 allowNull: false,
             }
+    },
+
+    follow: {
+            username: {
+                type: DT.STRING,
+                allowNull: false,
+            }
     }
+
 };
 
 // async function writeUser() {
