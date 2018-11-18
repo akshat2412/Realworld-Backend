@@ -1,18 +1,18 @@
 const { Router } = require('express')
 
-const { User, Password } = require('../db/dbconfig')
-const { authorizeRequest } = require('./auth')
+const { User, Password } = require('../../db/dbconfig')
+const { authorizeRequest } = require('../auth')
 
 const router = Router()
 
 // GET current user
 router.get('/', authorizeRequest, function(req, res, next){
-    User.findByPrimary(req.payload.username).then(user => {
+    User.findByPk(req.payload.username).then(user => {
         console.log('user = ' + user );
         if(!user){ res.sendStatus(404); }
         
         return res.json({
-            user: user.authorizedUser()
+            user: user.userToJSON()
         })
     }).catch(function(e) {
             next(`authorization failed or user doesn't exists`)
@@ -54,18 +54,23 @@ router.post('/', async (req, res, next) => {
             })
             .then(function() {
                 res.status(201).json({
-                    user: createdUser.authorizedUser()
+                    user: createdUser.userToJSON()
                 })
             })
     }).catch(function(e) {
         console.log(e)
-        next(e.errors[0].path + ' is not valid')
+        if(e.errors[0].type == 'unique violation'){
+            next(e.errors[0].path + ' is already taken')
+        }
+        if(e.errors[0].type == 'Validation error'){
+            next(e.errors[0].path + ' is not valid')
+        }
     }) 
 })
 
 // PUT update user information
 router.put('/', authorizeRequest, (req, res, next) => {
-    User.findByPrimary(req.payload.username).then(user => {
+    User.findByPk(req.payload.username).then(user => {
         if(!user){ return res.sendStatus(404); }
 
         if(req.body.user.bio !== 'undefined'){
@@ -93,7 +98,7 @@ router.put('/', authorizeRequest, (req, res, next) => {
 
         user.save().then(() => {
             return res.json({
-                user: user.authorizedUser()
+                user: user.userToJSON()
             })
         })
 
@@ -121,7 +126,7 @@ router.post('/login', (req, res, next) => {
                 .then(result => {
                     if(result){
                         return res.json({
-                            user: user.authorizedUser()
+                            user: user.userToJSON()
                         })
                     }
                     else {

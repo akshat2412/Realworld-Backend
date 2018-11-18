@@ -8,6 +8,7 @@ function getTokenFromHeaders(req) {
             return req.headers.authorization.split(' ')[1]
         }
     }
+    return null
 }
 
 function authorizeRequest(req, res, next) {
@@ -17,5 +18,16 @@ function authorizeRequest(req, res, next) {
     next()
 }
 
+function authorizeRequestOptional(req, res, next) {
+    var token = getTokenFromHeaders(req)
+    if(!token){
+        next()
+        return
+    }
+    var decodedToken = jwt.verify(token, secret.privateKey)
+    req.payload = decodedToken
+    next()
+}
 
-module.exports = { authorizeRequest }
+
+module.exports = { authorizeRequest, authorizeRequestOptional }

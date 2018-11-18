@@ -1,7 +1,8 @@
 const express = require('express')
 
 const { db, User } = require('./db/dbconfig')
-const userRouter = require('./routes/user')
+const userRouter = require('./routes/api/user')
+const profileRouter = require('./routes/api/profile')
 
 const server = express()
 
@@ -10,7 +11,8 @@ server.use(express.json())
 server.use(express.urlencoded({extended: true}))
 
 // Set Routes
-server.use('/users', userRouter)
+server.use('/api/users', userRouter)
+server.use('/api/profile', profileRouter)
 
 
 //Default Error Handler

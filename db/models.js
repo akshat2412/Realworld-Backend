@@ -41,7 +41,7 @@ module.exports = {
     },
 
     follow: {
-            username: {
+            followedUsername: {
                 type: DT.STRING,
                 allowNull: false,
             }

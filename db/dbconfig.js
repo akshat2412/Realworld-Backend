@@ -27,7 +27,7 @@ User.prototype.generateJWT = function() {
 }
 
 // Create user object to be sent
-User.prototype.authorizedUser = function () {  
+User.prototype.userToJSON = function () {  
     return {
         username: this.username,
         email: this.email,
@@ -35,6 +35,27 @@ User.prototype.authorizedUser = function () {
         bio: this.bio,
         image: this.image
     }
+}
+
+// Create Profile Object to be sent
+User.prototype.userToProfileJSON = async function (loggedUser = false) {
+    console.log('making profile object')
+    var following = loggedUser? await loggedUser.isFollowing(this.username) : false
+    return {
+        username: this.username,
+        bio: this.bio,
+        image: this.image,
+        following
+      }
+}
+
+// Check if calling user follows passed user
+User.prototype.isFollowing = async function (followedUsername) {
+    var following = await this.getUsersFollowed({where: {followedUsername}})
+    if(following.length !== 0){
+        return true
+    }
+    return false
 }
 
 // Create hash
@@ -50,9 +71,41 @@ User.prototype.validatePassword = async function(textPassword) {
     return result
 }
 
+User.prototype.follow = async function(user) {
+    var followedUserInstance = await Follow.findOne({where: {
+        followedUsername: user.username,
+        username: this.username
+    }})
+    if(followedUserInstance) {
+        return
+    }
+    else {
+        await Follow.create({
+            followedUsername: user.username
+        }).then(createdFollowedUser => {
+            this.addUsersFollowed(createdFollowedUser)
+        })
+    }
+    return
+}
+
+User.prototype.unFollow = async function(user) {
+    var followedUserInstance = await Follow.findOne({where: {
+        followedUsername: user.username,
+        username: this.username
+    }})
+    if(!followedUserInstance) {
+        return
+    }
+    else {
+        followedUserInstance.destroy()
+    }
+    return
+}
+
 // Create Associations
 User.hasOne(Password, {foreignKey: 'username', as: 'Password'})
-User.hasMany(Follow, {as: 'UsersFollowed'})
+User.hasMany(Follow, {foreignKey: 'username', as: 'UsersFollowed'})
 
 module.exports = {
     db, 
