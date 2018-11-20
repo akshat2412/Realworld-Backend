@@ -13,6 +13,7 @@ function getTokenFromHeaders(req) {
 
 function authorizeRequest(req, res, next) {
     var token = getTokenFromHeaders(req)
+    console.log(token)
     var decodedToken = jwt.verify(token, secret.privateKey)
     req.payload = decodedToken
     next()

@@ -2,7 +2,7 @@ const sequelize = require('sequelize')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 
-const { user, password, follow } = require('./models')
+const { user, password, follow, article, tags, comment } = require('./models')
 const { secret } = require('../secret')
 
 const db = new sequelize({
@@ -14,6 +14,9 @@ const db = new sequelize({
 const User = db.define('user', user);
 const Password = db.define('password', password)
 const Follow = db.define('follows', follow)
+const Article = db.define('article', article)
+const Tag = db.define('tag', tags)
+const Comment = db.define('comment', comment)
 
 // Generate JWT based on id, date, username and email, and private key
 User.prototype.generateJWT = function() {
@@ -39,13 +42,39 @@ User.prototype.userToJSON = function () {
 
 // Create Profile Object to be sent
 User.prototype.userToProfileJSON = async function (loggedUser = false) {
-    console.log('making profile object')
     var following = loggedUser? await loggedUser.isFollowing(this.username) : false
+    // console.log('building profile')
     return {
         username: this.username,
         bio: this.bio,
         image: this.image,
         following
+      }
+}
+
+Article.prototype.articleToJSON = async function (tagList, user, loggedUser = false) {
+    return {
+        slug: this.slug,
+        title: this.title,
+        description: this.description,
+        body: this.body,
+        tagList: typeof(tagList[0]) == 'string' ? tagList : tagList.map(tag => tag.name),
+        createdAt: this.createdAt,
+        updatedAt: this.updatedAt,
+        // favorited: false,
+        // favoritesCount: 0,
+        author: await user.userToProfileJSON(loggedUser)
+      }
+}
+
+Comment.prototype.commentToJson = async function (user, loggedUser = false) {
+    // console.log('building comment json')
+    return {
+        id: this.id,
+        body: this.body,
+        createdAt: this.createdAt,
+        updatedAt: this.updatedAt,
+        author: await user.userToProfileJSON(loggedUser)
       }
 }
 
@@ -106,9 +135,17 @@ User.prototype.unFollow = async function(user) {
 // Create Associations
 User.hasOne(Password, {foreignKey: 'username', as: 'Password'})
 User.hasMany(Follow, {foreignKey: 'username', as: 'UsersFollowed'})
+User.hasMany(Article, {foreignKey: 'username', as: 'Articles'})
+Tag.belongsToMany(Article, {through: 'articleTag'})
+Article.belongsToMany(Tag, {through: 'articletag'})
+Article.hasMany(Comment)
+User.hasMany(Comment, {foreignKey: 'username'})
 
 module.exports = {
     db, 
     User,
-    Password
+    Password,
+    Tag,
+    Article,
+    Comment
 }
