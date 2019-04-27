@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { db, User } = require('./db/dbconfig')
+const { db } = require('./db/dbbuilder')
 const userRouter = require('./routes/api/user')
 const profileRouter = require('./routes/api/profile')
 const articleRouter = require('./routes/api/articles')
