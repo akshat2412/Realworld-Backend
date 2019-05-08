@@ -1,19 +1,21 @@
-const { Router } = require('express')
-const slug = require('slug')
-const sequelize = require('sequelize')
-const Op = sequelize.Op
+const { Router } = require('express');
+const slug = require('slug');
+const sequelize = require('sequelize');
+const Op = sequelize.Op;
 
-const { Article, User, Tag, Comment } = require('../../db/dbconfig')
-const { authorizeRequest, authorizeRequestOptional } = require('../auth')
+const { Tag } = require('../../db/dbbuilder');
+const User = require('../../db/models/user');
+const Article = require('../../db/models/article');
+const Comment = require('../../db/models/comment');
+const { authorizeRequest, authorizeRequestOptional } = require('../auth');
 
 const router = Router()
 
 // POST: article
 router.post('/', authorizeRequest, function(req, res, next) {
-    console.log(req.body)
+
     //Invalid format of the request
     if(!req.body.article){ 
-        console.log('article')
         return res.status(422).json({errors: {format: 'Invalid Format'} })
     }
     if(!req.body.article.title){ 
@@ -28,7 +30,6 @@ router.post('/', authorizeRequest, function(req, res, next) {
 
     User.findByPk(req.payload.username).then( async function(user){
         if (!user) { 
-            console.log('no user')
             return res.sendStatus(401); }
         var articleSlug = slug(req.body.article.title) + '-' + (Math.random() * Math.pow(36, 6) | 0).toString(36)
         await Article.create({
@@ -67,15 +68,15 @@ router.get('/', authorizeRequestOptional, function(req, res, next) {
     var limit = 20
     var offset = 0
   
-    if(typeof req.query.limit !== 'undefined'){
+    if(typeof req.query.limit !== undefined){
       limit = req.query.limit
     }
   
-    if(typeof req.query.offset !== 'undefined'){
+    if(typeof req.query.offset !== undefined){
       offset = req.query.offset
     }
   
-    if( typeof req.query.tag !== 'undefined' ){
+    if( typeof req.query.tag !== undefined ){
       query.tagList = [req.query.tag]
     }
     Promise.all([
@@ -124,6 +125,66 @@ router.get('/:article', authorizeRequestOptional, function(req, res, next) {
     }).catch(next);
   });
 
+// PUT: article
+router.put('/:article', authorizeRequest, function(req, res, next) {
+    User.findById(req.payload.username).then(function(user) {
+        if(!user) { return res.sendStatus(401) }
+        Article.findByPk(req.params['article']).then(async article => {
+            if(!article) { return res.sendStatus(401) }
+            if(article.username !== req.payload.username) { return res.sendStatus(403) }
+            
+            
+            
+            if(req.body.article.description !== undefined) {
+                article.description = req.body.article.description;
+            }
+            
+            if(req.body.article.body !== undefined) {
+                article.body = req.body.article.body;
+            }
+
+            let tags = await article.getTags();
+
+            if(req.body.article.title !== undefined) {
+                article.title = req.body.article.title
+                let articleSlug = slug(req.body.article.title) + '-' + (Math.random() * Math.pow(36, 6) | 0).toString(36);
+                
+                Article.destroy({where: {slug: req.params['article']}}).then(rowsDestroyed => {
+                    Article.create({
+                        slug: articleSlug,
+                        title: article.title,
+                        body: article.body,
+                        description: article.description
+                    }).then(async newArticle => {
+                        await user.addArticles(newArticle); 
+                        for(const tag of tags) {
+                            await Tag.findOrCreate({
+                                where: {
+                                    name: tag.name
+                                }
+                            }).then(async tagInstance => {
+                                await newArticle.addTag(tagInstance[0].dataValues.name)
+                            })
+                        }
+                        let articleJSON = await newArticle.articleToJSON(tags, user);
+
+                        return res.json({
+                            article: articleJSON
+                        })
+                    })
+                })
+            }
+            else {
+                article.save().then(async function() {
+                    let articleJSON = await article.articleToJSON(tags, user);
+                    return res.json({
+                        article: articleJSON
+                    })
+                })
+            }
+        })
+    })
+})
 
 // DELETE: article
 router.delete('/:article', authorizeRequest, function(req, res, next) {
@@ -143,11 +204,11 @@ router.delete('/:article', authorizeRequest, function(req, res, next) {
 //     var limit = 20;
 //     var offset = 0;
   
-//     if(typeof req.query.limit !== 'undefined'){
+//     if(typeof req.query.limit !== undefined){
 //       limit = req.query.limit;
 //     }
   
-//     if(typeof req.query.offset !== 'undefined'){
+//     if(typeof req.query.offset !== undefined){
 //       offset = req.query.offset;
 //     }
   
@@ -211,7 +272,6 @@ router.post('/:article/comments', authorizeRequest, function(req, res, next) {
         if(!req.body.comment.body){ 
             return res.status(422).json({errors: {body: `can't be blank`} })
         }
-        console.log(req.params['article'])
         Article.findByPk(req.params['article']).then(async article => {
             if(!article){return res.sendStatus(403)}
             await Comment.create({

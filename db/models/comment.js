@@ -1,7 +1,4 @@
-const db = require('../dbconfig');
-const { comment } = require('../schema');
-
-const Comment = db.define('comment', comment);
+const { Comment, db} = require('../dbbuilder');
 
 Comment.prototype.commentToJson = async function (user, loggedUser = false) {
     // console.log('building comment json')

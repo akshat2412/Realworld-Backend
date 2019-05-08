@@ -1,11 +1,8 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 
-const db = require('../dbconfig');
 const { secret } = require('../../secret');
-const { user } = require('../schema');
-
-const User = db.define('user', user);
+const { User, Follow } = require('../dbbuilder')
 
 // Generate JWT based on id, date, username and email, and private key
 User.prototype.generateJWT = function() {

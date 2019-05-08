@@ -13,7 +13,7 @@ server.use(express.urlencoded({extended: true}))
 
 // Set Routes
 server.use('/api/users', userRouter)
-server.use('/api/profile', profileRouter)
+server.use('/api/profiles', profileRouter)
 server.use('/api/articles', articleRouter)
 
 

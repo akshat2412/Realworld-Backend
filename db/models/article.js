@@ -1,7 +1,5 @@
 const db = require('../dbconfig');
-const { article } = require('../schema');
-
-const Article = db.define('article', article);
+const { Article } = require('../dbbuilder');
 
 Article.prototype.articleToJSON = async function (tagList, user, loggedUser = false) {
     return {
@@ -9,7 +7,7 @@ Article.prototype.articleToJSON = async function (tagList, user, loggedUser = fa
         title: this.title,
         description: this.description,
         body: this.body,
-        tagList: typeof(tagList[0]) == 'string' ? tagList : tagList.map(tag => tag.name),
+        tagList: typeof(tagList) == Array ? tagList : tagList.map(tag => tag.name),
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
         // favorited: false,

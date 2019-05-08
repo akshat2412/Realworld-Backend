@@ -1,13 +1,14 @@
 const db = require('./dbconfig');
-const User = require('./models/user');
-const Article = require('./models/article');
-const Comment = require('./models/comment');
-const {  password, follow, tags } = require('./schema')
+const {  user, password, follow, tags, article, comment } = require('./schema')
 
-// Create seperate files for below models if additional functionality needs to be added.
+
+// Create seperate files for models if additional functionality needs to be added.
+const User = db.define('user', user);
 const Password = db.define('password', password);
 const Follow = db.define('follows', follow);
+const Article = db.define('article', article);
 const Tag = db.define('tag', tags);
+const Comment = db.define('comment', comment);
 
 // Create Associations
 User.hasOne(Password, {foreignKey: 'username', as: 'Password'})
@@ -24,5 +25,6 @@ module.exports = {
     Password,
     Tag,
     Article,
-    Comment
+    Comment,
+    Follow
 }

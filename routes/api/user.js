@@ -1,6 +1,7 @@
 const { Router } = require('express')
 
-const { User, Password } = require('../../db/dbconfig')
+const User = require('../../db/models/user')
+const { Password }  = require('../../db/dbbuilder')
 const { authorizeRequest } = require('../auth')
 
 const router = Router()
@@ -8,7 +9,6 @@ const router = Router()
 // GET current user
 router.get('/', authorizeRequest, function(req, res, next){
     User.findByPk(req.payload.username).then(user => {
-        console.log('user = ' + user );
         if(!user){ res.sendStatus(404); }
         
         return res.json({

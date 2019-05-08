@@ -1,6 +1,6 @@
 const { Router } = require('express')
 
-const { User} = require('../../db/dbconfig')
+const User = require('../../db/models/user')
 const { authorizeRequest, authorizeRequestOptional } = require('../auth')
 
 const router = Router()
